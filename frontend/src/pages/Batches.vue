@@ -10,9 +10,10 @@ onMounted(load)
 </script>
 <template>
   <div class="panel">
+    <p class="msg">sealed 批次为现行凭证，笔数/合计永不回改；已钉退回以其它业务日的负向事实入账、随该日钉扎。</p>
     <p class="msg err" v-if="err">{{ err }}</p>
     <table>
-      <thead><tr><th>批次</th><th>业务日</th><th>状态</th><th>笔数</th><th>合计</th><th>钉扎时刻</th></tr></thead>
+      <thead><tr><th>批次</th><th>业务日</th><th>状态</th><th>笔数</th><th>合计</th><th>钉扎时刻</th><th>备注</th></tr></thead>
       <tbody>
         <tr v-for="b in rows" :key="b.id">
           <td>{{ b.id }}</td>
@@ -21,6 +22,7 @@ onMounted(load)
           <td>{{ b.fact_count }}</td>
           <td>{{ b.total_amount }}</td>
           <td>{{ b.sealed_at }}</td>
+          <td>{{ b.note }}</td>
         </tr>
       </tbody>
     </table>

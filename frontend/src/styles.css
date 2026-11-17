@@ -124,6 +124,8 @@ button.ghost {
 }
 .tag.ok { background: rgba(47, 143, 107, 0.12); color: var(--ok); }
 .tag.warn { background: rgba(196, 59, 122, 0.12); color: var(--ticket); }
+.tag.muted { background: rgba(107, 122, 146, 0.14); color: var(--muted); }
+.tag.bad { background: rgba(196, 92, 92, 0.12); color: var(--bad); }
 
 @media (max-width: 720px) {
   .chip { min-width: 0; flex: 1 1 40%; border-radius: 0.75rem; }

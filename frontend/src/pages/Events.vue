@@ -28,6 +28,9 @@ async function submit() {
     await load()
   } catch (e) { err.value = e.message }
 }
+function typeTag(t) {
+  return t === 'redeem' ? 'warn' : t === 'void' ? 'muted' : t === 'return' ? 'bad' : ''
+}
 onMounted(load)
 </script>
 <template>
@@ -37,7 +40,6 @@ onMounted(load)
         <select v-model="form.event_type">
           <option value="issue">发放</option>
           <option value="redeem">核销</option>
-          <option value="void">作废</option>
         </select>
       </label>
       <label>券码 <input v-model="form.coupon_code" placeholder="C-2xxx" /></label>
@@ -50,21 +52,23 @@ onMounted(load)
       <button type="button" @click="submit">写入事件</button>
       <button type="button" class="ghost" @click="load">刷新</button>
     </div>
+    <p class="msg">作废/退回不在此直接写事件，请到「核销钉扎」页走唯一退回入口，事件湖与事实同事务同步。</p>
     <p class="msg" v-if="msg">{{ msg }}</p>
     <p class="msg err" v-if="err">{{ err }}</p>
   </div>
   <div class="panel">
     <table>
-      <thead><tr><th>ID</th><th>类型</th><th>券码</th><th>活动</th><th>金额</th><th>业务日</th><th>时刻</th></tr></thead>
+      <thead><tr><th>ID</th><th>类型</th><th>券码</th><th>活动</th><th>金额</th><th>业务日</th><th>时刻</th><th>备注</th></tr></thead>
       <tbody>
         <tr v-for="r in rows" :key="r.id">
           <td>{{ r.id }}</td>
-          <td><span class="tag" :class="{ warn: r.event_type==='redeem' }">{{ r.event_type }}</span></td>
+          <td><span class="tag" :class="typeTag(r.event_type)">{{ r.event_type }}</span></td>
           <td>{{ r.coupon_code }}</td>
           <td>{{ r.campaign_code }}</td>
           <td>{{ r.amount }}</td>
           <td>{{ r.business_day }}</td>
           <td>{{ r.occurred_at }}</td>
+          <td>{{ r.note }}</td>
         </tr>
       </tbody>
     </table>

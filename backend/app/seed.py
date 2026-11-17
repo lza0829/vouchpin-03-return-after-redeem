@@ -43,8 +43,26 @@ def seed_if_empty() -> None:
             )
             if et == "redeem":
                 conn.execute(
-                    "INSERT INTO redeem_facts(coupon_code, campaign_code, amount, business_day, event_id, status) VALUES(?,?,?,?,?, 'open')",
+                    "INSERT INTO redeem_facts(coupon_code, campaign_code, amount, business_day, event_id, status, kind) VALUES(?,?,?,?,?, 'open', 'redeem')",
                     (cc, camp, amt, day, cur.lastrowid),
+                )
+        # 昨日核销钉扎成 sealed 批：已钉退回（落其它业务日）开箱可验；
+        # 今日核销保持 open：未钉冲销后重钉开箱可验。
+        yfacts = conn.execute(
+            "SELECT id, amount FROM redeem_facts WHERE business_day=? AND status='open'",
+            (yday,),
+        ).fetchall()
+        if yfacts:
+            total = round(sum(float(f["amount"]) for f in yfacts), 2)
+            cur = conn.execute(
+                "INSERT INTO redeem_batches(business_day, status, fact_count, total_amount, sealed_at, note) VALUES(?,?,?,?,?,?)",
+                (yday, "sealed", len(yfacts), total, f"{yday}T23:59:00", "seed 钉扎"),
+            )
+            bid = cur.lastrowid
+            for f in yfacts:
+                conn.execute(
+                    "UPDATE redeem_facts SET status='sealed', batch_id=? WHERE id=?",
+                    (bid, f["id"]),
                 )
         conn.commit()
     finally:

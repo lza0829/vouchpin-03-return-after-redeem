@@ -21,6 +21,11 @@ def seal(body: dict[str, Any]):
     return svc.seal(body)
 
 
+@router.post("/redeem/return")
+def return_(body: dict[str, Any]):
+    return svc.return_redemption(body)
+
+
 @router.get("/batches")
 def batches():
     return svc.list_batches()

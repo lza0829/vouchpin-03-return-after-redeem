@@ -21,6 +21,7 @@ export const api = {
   facts: (day) => req('/facts' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
   preview: (day) => req('/redeem/preview' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
   seal: (body) => req('/redeem/seal', { method: 'POST', body: JSON.stringify(body) }),
+  returnRedeem: (body) => req('/redeem/return', { method: 'POST', body: JSON.stringify(body) }),
   batches: () => req('/batches'),
   getDay: () => req('/settings/day'),
   setDay: (business_day) => req('/settings/day', { method: 'PUT', body: JSON.stringify({ business_day }) }),

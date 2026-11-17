@@ -31,14 +31,24 @@ def add_event(body: dict[str, Any]) -> dict[str, Any]:
     try:
         day = body.get("business_day") or settings_repo.get(conn, "business_day")
         et = body.get("event_type")
-        if et not in {"issue", "redeem", "void"}:
-            raise HTTPException(400, "event_type 须为 issue/redeem/void")
+        if et in {"void", "return"}:
+            raise HTTPException(
+                400,
+                "作废/退回须走唯一入口 POST /api/redeem/return，"
+                "由其在同一事务内同步事件湖与事实状态，禁止只写事件不改事实",
+            )
+        if et not in {"issue", "redeem"}:
+            raise HTTPException(400, "event_type 须为 issue/redeem（void/return 请走 /api/redeem/return）")
         code = (body.get("coupon_code") or "").strip()
         camp = (body.get("campaign_code") or "").strip()
         if not code or not camp:
             raise HTTPException(400, "coupon_code / campaign_code 必填")
         if et == "redeem" and fact_repo.day_is_sealed(conn, day):
             raise HTTPException(409, f"业务日 {day} 核销已钉扎，禁止再写入核销")
+        if et == "redeem":
+            prev = fact_repo.latest_redeem_fact(conn, code)
+            if prev and prev["status"] != "voided":
+                raise HTTPException(409, f"券 {code} 已核销（事实 #{prev['id']} 在效），禁止重复核销")
         amount = float(body.get("amount") or 0)
         if et == "redeem" and amount <= 0:
             # default face value from campaign
@@ -58,18 +68,16 @@ def add_event(body: dict[str, Any]) -> dict[str, Any]:
         )
         fact_id = None
         if et == "redeem":
-            try:
-                fact_id = fact_repo.insert_fact(
-                    conn,
-                    coupon_code=code,
-                    campaign_code=camp,
-                    amount=amount,
-                    business_day=day,
-                    event_id=eid,
-                    status="open",
-                )
-            except Exception as e:
-                raise HTTPException(409, f"核销事实写入失败（可能券码已核销）: {e}") from e
+            fact_id = fact_repo.insert_fact(
+                conn,
+                coupon_code=code,
+                campaign_code=camp,
+                amount=amount,
+                business_day=day,
+                event_id=eid,
+                status="open",
+                kind="redeem",
+            )
         conn.commit()
         return {"event_id": eid, "fact_id": fact_id, "business_day": day}
     finally:
